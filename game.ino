@@ -13,14 +13,22 @@ int MISSION_BUTTON_PIN = 2;
 int maxButtonPressTime = 2000;
 boolean buttonIsPressed = false;
 
-int totalMissions = 2;
+int totalMissions = 104;
 // statisics
 int totalNrOfRulesPrints = 0;
 int totalNrOfMissionPrints = 0;
 
 char buffer[300];
 
+#define RED_LED 7
+#define YELLOW_LED 8
+
 void setup() {
+  pinMode(YELLOW_LED, OUTPUT);
+  pinMode(RED_LED, OUTPUT);
+
+  lightYELLOW();
+
   mySerial.begin(9600);
   printer.begin();
 
@@ -33,6 +41,15 @@ void setup() {
   printer.sleep();
 }
 
+void lightRED () {
+  digitalWrite(YELLOW_LED, LOW);
+  digitalWrite(RED_LED, HIGH);
+}
+
+void lightYELLOW () {
+  digitalWrite(RED_LED, LOW);
+  digitalWrite(YELLOW_LED, HIGH);
+}
 
 void loadBuffer (int index) {
   if (totalNrOfMissionPrints == ((totalMissions*2)) ) {
@@ -47,10 +64,15 @@ void loadBuffer (int index) {
   }
 }
 
+void loadBufferRules (int index) {
+  strcpy_P(buffer, (char*)pgm_read_word(&(rulesArray[index])));
+}
+
 void printMission() {
   if (isPrinting) {
     return;
   }
+  lightRED();
   printer.wake();
   // man skulle kunna varigera reglerna lite ;)
   isPrinting = true;
@@ -63,18 +85,20 @@ void printMission() {
   printer.justify('L');
   printer.setSize('S');
   printer.println(buffer);
-  printer.feed(1); // should me 5
+  printer.feed(5);
 
   totalNrOfMissionPrints = totalNrOfMissionPrints + 1;
   isPrinting = false;
   printer.setDefault();
   printer.sleep();
+  lightYELLOW();
 }
 
 void printRules() {
   if (isPrinting) {
     return;
   }
+  lightRED();
   printer.wake();
   // man skulle kunna varigera reglerna lite ;)
   isPrinting = true;
@@ -91,7 +115,7 @@ void printRules() {
 
   printer.justify('L');
   printer.setSize('S');
-  printer.println("Denna leken gar ut pa att gora sa manga \"uppdrag\" som mojligt utan att nagon annan forstar vad du haller pa med.");
+  printer.println("Denna leken gar ut pa att gora sa manga uppdrag som mojligt utan att nagon annan marker.");
   printer.setSize('M');
   printer.justify('C');
   printer.underlineOn();
@@ -99,17 +123,33 @@ void printRules() {
   printer.underlineOff();
   printer.justify('L');
   printer.setSize('S');
-  printer.println("1. Du far inte prata / beratta om spelet eller visa reglerna for nagon. Du lassas som om du inte vet nagot om detta spel.");
+  printer.println("1. Du far inte prata / beratta om spelet eller visa reglerna for nagon.");
   printer.feed(1);
-  printer.println("2. Du far inte visa dinna lappar for nagon.");
+  if (totalNrOfRulesPrints == 6 || 11) {
+    loadBufferRules(0);
+  } else {
+    loadBufferRules(1);
+  }
+
+  printer.println(buffer);
   printer.feed(1);
-  printer.println("3. Om du upptacker att nagon gor / nyss gjorde ett uppdrag sager du \"kalaspuffar\" deras uppdrag blir da ogiltligt.");
+  if (totalNrOfRulesPrints == 1 || 4) {
+    loadBufferRules(2);
+  } else {
+    loadBufferRules(3);
+  }
+  printer.println(buffer);
   printer.feed(1);
-  printer.println("4. Du far gora sa manga uppdrag du bara kan.");
+  printer.println("4. Det finns ingen begransing i hur manga du far gora");
   printer.feed(1);
-  printer.println("5. Du far max ha 3st aktiva updrag samtidigt pa handen.");
+  if (totalNrOfRulesPrints == 0 || 5) {
+    loadBufferRules(5);
+  } else {
+    loadBufferRules(4);
+  }
+  printer.println(buffer);
   printer.feed(1);
-  printer.println("6. Nagon maste alltid vittna det du gor");
+  printer.println("6. Alla uppdrag ska utforas sa att nagon ser.");
   printer.feed(1);
   printer.boldOn();
   printer.println("Spelet slutar kl 22:00.");
@@ -134,6 +174,7 @@ void printRules() {
   isPrinting = false;
   printer.setDefault();
   printer.sleep();
+  lightYELLOW();
 }
 
 boolean handle_button(int buttonPin) {
@@ -152,5 +193,3 @@ void loop() {
   }
   delay(DELAY);
 }
-
-
