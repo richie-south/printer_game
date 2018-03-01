@@ -17,7 +17,7 @@ int totalMissions = 104;
 // statisics
 int totalNrOfRulesPrints = 0;
 int totalNrOfMissionPrints = 0;
-
+int extraPrints = 0;
 char buffer[300];
 
 #define RED_LED 7
@@ -68,6 +68,10 @@ void loadBufferRules (int index) {
   strcpy_P(buffer, (char*)pgm_read_word(&(rulesArray[index])));
 }
 
+void loadBufferExtra (int index) {
+  strcpy_P(buffer, (char*)pgm_read_word(&(extraArray[index])));
+}
+
 void printMission() {
   if (isPrinting) {
     return;
@@ -85,6 +89,22 @@ void printMission() {
   printer.justify('L');
   printer.setSize('S');
   printer.println(buffer);
+
+  if (totalNrOfMissionPrints == 20 || totalNrOfMissionPrints == 31 || totalNrOfMissionPrints == 49 || totalNrOfMissionPrints == 13 || totalNrOfMissionPrints == 83 || totalNrOfMissionPrints == 36) {
+    printer.underlineOn();
+    printer.println("detta ar uppdrag");
+    printer.underlineOff();
+    printer.setSize('M');
+    printer.justify('C');
+    printer.println(totalNrOfMissionPrints);
+    printer.justify('L');
+    printer.setSize('S');
+  }
+
+  if (totalNrOfMissionPrints > 20 && totalNrOfMissionPrints % 5 == 0) {
+    printExtra();
+  }
+
   printer.feed(5);
 
   totalNrOfMissionPrints = totalNrOfMissionPrints + 1;
@@ -92,6 +112,23 @@ void printMission() {
   printer.setDefault();
   printer.sleep();
   lightYELLOW();
+}
+
+void printExtra () {
+  printer.feed(2);
+  if (extraPrints >= 11) {
+    return;
+  }
+  loadBufferExtra(extraPrints);
+  printer.underlineOn();
+  printer.setSize('M');
+  printer.justify('C');
+  printer.println("EXTRA");
+  printer.underlineOff();
+  printer.justify('L');
+  printer.setSize('S');
+  printer.println(buffer);
+  extraPrints = extraPrints + 1;
 }
 
 void printRules() {
